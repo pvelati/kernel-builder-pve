@@ -16,25 +16,27 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-#      - name: Install dependencies
-#        run: sudo apt-get install curl
-
       - name: Fetch kernel versions
         run: |
-          echo "PVE_VERSION=$(curl -s http://download.proxmox.com/debian/pve/dists/${{ env.OS_CODENAME }}/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g)" >> $GITHUB_ENV
-          echo "THIS_VERSION=$(curl -s https://pvelati.github.io/apt-repository/debian/dists/${{ env.OS_CODENAME }}/main/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g)" >> $GITHUB_ENV
+          echo "PVE_VERSION=$(curl -s http://download.proxmox.com/debian/pve/dists/${{ env.OS_CODENAME }}/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
+          echo "THIS_VERSION=$(curl -s https://pvelati.github.io/apt-repository/debian/dists/${{ env.OS_CODENAME }}/main/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
 
       - name: Check
+        id: check
         run: |
-          if [ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]; then
+          if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
               echo "No new release found, exiting pipeline ..."
               exit 0
           fi
           echo "Found new Linux kernel version ${{ env.PVE_KVERSION }}"
-          echo "::set-output name=FOUND::0"
+          echo "::set-output name=newversion::true"
+    outputs:
+      newversion: ${{ steps.check.outputs.newversion }}
 
   build:
     runs-on: ubuntu-latest
+    if: ${{ needs.check.outputs.newversion }}
+    needs: [check]
     container:
       image: ghcr.io/pvelati/docker-debian-pve-builder:main
     steps:
