@@ -1,0 +1,10 @@
+Package: pve-kernel-5.15-${BUILD_ARCH}
+Version: ${META_VERSION}
+Priority: optional
+Section: admin
+Maintainer: Paolo Velati <paolo.velati@gmail.com>
+Provides: linux-image-amd64, linux-image-generic, wireguard-modules (= 1.0.0), pve-kernel-5.15
+Depends: pve-firmware, pve-kernel-${KERNEL_VERSION}-pve-${BUILD_ARCH}
+Description: Latest Proxmox VE Kernel Image for Broadwell Arch
+ This is a metapackage which will install the latest available
+ proxmox kernel from the 5.15 series, built with march=broadwell.

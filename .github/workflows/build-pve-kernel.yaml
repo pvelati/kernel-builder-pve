@@ -1,0 +1,98 @@
+---
+# yamllint disable rule:line-length
+name: build_proxmox_kernel_5.15
+
+on:  # yamllint disable-line rule:truthy
+  workflow_dispatch:
+    schedule:
+      - cron: '0 12 * * *'  # Daily
+
+env:
+  OS_CODENAME: bullseye
+  BUILD_ARCH: broadwell
+  REPO_TARGET: pvelati/apt-repository
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+#      - name: Install dependencies
+#        run: sudo apt-get install curl
+
+      - name: Fetch kernel versions
+        run: |
+          echo "PVE_VERSION=$(curl -s http://download.proxmox.com/debian/pve/dists/${{ env.OS_CODENAME }}/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g)" >> $GITHUB_ENV
+          echo "THIS_VERSION=$(curl -s https://pvelati.github.io/apt-repository/debian/dists/${{ env.OS_CODENAME }}/main/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g)" >> $GITHUB_ENV
+
+      - name: Check
+        run: |
+          if [ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]; then
+              echo "No new release found, exiting pipeline ..."
+              exit 0
+          fi
+          echo "Found new Linux kernel version ${{ env.PVE_KVERSION }}"
+          echo "::set-output name=FOUND::0"
+
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/pvelati/docker-debian-pve-builder:main
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Clone pve-kernel repo branch pve-kernel-5.15
+        run: |
+          git clone --depth 1 --branch pve-kernel-5.15 https://git.proxmox.com/git/pve-kernel.git
+
+      - name: Add patch
+        working-directory: ./pve-kernel
+        run: |
+          wget -O patches/kernel/0032-add-uarch.patch https://raw.githubusercontent.com/graysky2/kernel_compiler_patch/master/more-uarches-for-kernel-5.15-5.16.patch
+
+      - name: Configure stuff
+        working-directory: ./pve-kernel
+        run: |
+          sed -i 's/\EXTRAVERSION=-${KREL}-pve/EXTRAVERSION=-${KREL}-pve-broadwell/g' Makefile
+          sed -i 's/\-e CONFIG_PAGE_TABLE_ISOLATION/\-e CONFIG_PAGE_TABLE_ISOLATION \\/g' debian/rules
+          sed -i '/^\-e CONFIG_PAGE_TABLE_ISOLATION.*/a \-d CONFIG_GENERIC_CPU \\\n\-e CONFIG_MBROADWELL \\\n\-e CONFIG_X86_INTEL_USERCOPY \\\n\-e CONFIG_X86_USE_PPRO_CHECKSUM \\\n\-e CONFIG_X86_P6_NOP \\\n\-e CONFIG_CC_HAS_RETURN_THUNK \\\n\-e CONFIG_SPECULATION_MITIGATIONS \\\n\-e CONFIG_RETHUNK \\\n\-e CONFIG_CPU_UNRET_ENTRY \\\n\-e CONFIG_CPU_IBPB_ENTRY \\\n\-e CONFIG_CPU_IBRS_ENTRY' debian/rules
+
+      - name: Make debs
+        working-directory: ./pve-kernel
+        run: |
+          make PVE_BUILD_CFLAGS="-march=broadwell" deb
+
+      - name: Build metapackage
+        working-directory: ./metapackage
+        run: |
+         echo "CPU_ARCH=$(ls ../pve-kernel/pve-kernel-libc*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
+         export KERNEL_VERSION=$(ls ../pve-kernel/pve-kernel-libc*.deb | cut -d '_' -f2)
+         echo "KERNEL_VERSION=$(echo $KERNEL_VERSION)" >> $GITHUB_ENV
+         export META_VERSION=$(date -u +%y%m%d%H%M)
+         echo "META_VERSION=$(echo $META_VERSION)" >> $GITHUB_ENV
+         cat ns-control-TEMPLATE | envsubst > ns-control
+         equivs-build ns-control
+
+      - name: Release packages
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: false
+          prerelease: false
+          generate_release_notes: false
+          tag_name: ${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}
+          body: |
+           Metapackage for pve-kernel:
+           * Version: ${{ env.META_VERSION }}
+           * Kernel: ${{ env.KERNEL_VERSION }}
+           * Distribution: ${{ env.OS_CODENAME }}
+           * Arch: ${{ env.CPU_ARCH }}
+           * March: ${{ env.BUILD_ARCH }}
+          files: |
+            pve-kernel/*.deb
+            metapackage/pve-kernel-*_all.deb
+
+      - name: Trigger repository action
+        run: |
+          curl -X POST -H "Accept: application/vnd.github+json" \
+           -H "Authorization: Bearer ${{ secrets.GH_TOKEN_TRIGGER }}" https://api.github.com/repos/${{ env.REPO_TARGET }}/dispatches \
+           -d '{"event_type":"trigger_build","client_payload":{"repository":{"codename": "${{ env.OS_CODENAME }}","owner":"${{ github.repository_owner }}","name":"${{ github.repository }}","tag":"${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}"}}}'
+# yamllint enable rule:line-length
