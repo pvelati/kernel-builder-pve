@@ -5,7 +5,7 @@ name: build_proxmox_kernel_5.15
 on:  # yamllint disable-line rule:truthy
   workflow_dispatch:
     schedule:
-      - cron: '0 12 * * *'  # Daily
+      - cron: '0 */4 * * *'  # Every 4 hours
 
 env:
   OS_CODENAME: bullseye
@@ -25,6 +25,7 @@ jobs:
         id: check
         run: |
           if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
+          #if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
               echo "No new release found, exiting pipeline ..."
               exit 0
           fi
@@ -39,7 +40,21 @@ jobs:
     needs: [check]
     container:
       image: ghcr.io/pvelati/docker-debian-pve-builder:main
+      volumes:
+        - /opt:/sys_root/opt
+        - /usr/local/lib:/sys_root/usr/local/lib
+        - /usr/local/share:/sys_root/usr/local/share
+        - /usr/share:/sys_root/usr/share
     steps:
+      - name: Maximize build space
+        run: |
+          #df -h
+          rm -rf /sys_root/opt/az /sys_root/opt/google /sys_root/opt/hhvm /sys_root/opt/hostedtoolcache /sys_root/opt/microsoft /sys_root/opt/mssql-tools /sys_root/opt/pipx /sys_root/opt/pipx_bin /sys_root/opt/post-generation /sys_root/opt/vsts
+          rm -rf /sys_root/usr/local/lib/R /sys_root/usr/local/lib/android /sys_root/usr/local/lib/heroku /sys_root/usr/local/lib/lein /sys_root/usr/local/lib/node_modules /sys_root/usr/local/lib/python*
+          rm -rf /sys_root/usr/local/share/applications /sys_root/usr/local/share/chrom* /sys_root/usr/local/share/cmake* /sys_root/usr/local/share/fonts /sys_root/usr/local/share/*_driver /sys_root/usr/local/share/man /sys_root/usr/local/share/phantom*
+          rm -rf /sys_root/usr/share/dotnet /sys_root/usr/share/host /sys_root/usr/share/packs /sys_root/usr/share/sdk* /sys_root/usr/share/shared /sys_root/usr/share/templates
+          #df -h
+
       - uses: actions/checkout@v3
 
       - name: Clone pve-kernel repo branch pve-kernel-5.15
