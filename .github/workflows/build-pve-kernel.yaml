@@ -9,7 +9,8 @@ on:  # yamllint disable-line rule:truthy
 
 env:
   OS_CODENAME: bullseye
-  BUILD_ARCH: broadwell
+  #BUILD_ARCH: broadwell
+  BUILD_ARCH: silvermont
   REPO_TARGET: pvelati/apt-repository
 
 jobs:
@@ -24,8 +25,8 @@ jobs:
       - name: Check
         id: check
         run: |
-          if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
-          #if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
+          #if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
+          if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
               echo "No new release found, exiting pipeline ..."
               exit 0
           fi
@@ -48,12 +49,10 @@ jobs:
     steps:
       - name: Maximize build space
         run: |
-          #df -h
           rm -rf /sys_root/opt/az /sys_root/opt/google /sys_root/opt/hhvm /sys_root/opt/hostedtoolcache /sys_root/opt/microsoft /sys_root/opt/mssql-tools /sys_root/opt/pipx /sys_root/opt/pipx_bin /sys_root/opt/post-generation /sys_root/opt/vsts
           rm -rf /sys_root/usr/local/lib/R /sys_root/usr/local/lib/android /sys_root/usr/local/lib/heroku /sys_root/usr/local/lib/lein /sys_root/usr/local/lib/node_modules /sys_root/usr/local/lib/python*
           rm -rf /sys_root/usr/local/share/applications /sys_root/usr/local/share/chrom* /sys_root/usr/local/share/cmake* /sys_root/usr/local/share/fonts /sys_root/usr/local/share/*_driver /sys_root/usr/local/share/man /sys_root/usr/local/share/phantom*
           rm -rf /sys_root/usr/share/dotnet /sys_root/usr/share/host /sys_root/usr/share/packs /sys_root/usr/share/sdk* /sys_root/usr/share/shared /sys_root/usr/share/templates
-          #df -h
 
       - uses: actions/checkout@v3
 
@@ -69,14 +68,25 @@ jobs:
       - name: Configure stuff
         working-directory: ./pve-kernel
         run: |
-          sed -i 's/\EXTRAVERSION=-${KREL}-pve/EXTRAVERSION=-${KREL}-pve-broadwell/g' Makefile
+          # need to do that in python or something else not bash
+          export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP '5.15.\d+-\d+' | tail -1 | grep -o .$)
+          echo "BUILD_NUMBER=$(echo $BUILD_NUMBER)" >> $GITHUB_ENV
+          echo ${{ env.BUILD_ARCH }} | tr 'a-z' 'A-Z' > build_arch_upper_tmp
+          export BAUP=$(cat build_arch_upper_tmp)
+          echo "BAUP=$(cat build_arch_upper_tmp)" >> $GITHUB_ENV
+          sed -i "s/^.*\bKREL=\b.*$/KREL=$BUILD_NUMBER/g" Makefile
+          sed -i "s/\EXTRAVERSION=-\${KREL}-pve/EXTRAVERSION=-\${KREL}-pve-${{ env.BUILD_ARCH }}/g" Makefile
           sed -i 's/\-e CONFIG_PAGE_TABLE_ISOLATION/\-e CONFIG_PAGE_TABLE_ISOLATION \\/g' debian/rules
-          sed -i '/^\-e CONFIG_PAGE_TABLE_ISOLATION.*/a \-d CONFIG_GENERIC_CPU \\\n\-e CONFIG_MBROADWELL \\\n\-e CONFIG_X86_INTEL_USERCOPY \\\n\-e CONFIG_X86_USE_PPRO_CHECKSUM \\\n\-e CONFIG_X86_P6_NOP \\\n\-e CONFIG_CC_HAS_RETURN_THUNK \\\n\-e CONFIG_SPECULATION_MITIGATIONS \\\n\-e CONFIG_RETHUNK \\\n\-e CONFIG_CPU_UNRET_ENTRY \\\n\-e CONFIG_CPU_IBPB_ENTRY \\\n\-e CONFIG_CPU_IBRS_ENTRY' debian/rules
+          sed -i '/^\-e CONFIG_PAGE_TABLE_ISOLATION.*/a \-d CONFIG_GENERIC_CPU \\\n\-e CONFIG_MARCHITECTURE \\\n\-e CONFIG_X86_INTEL_USERCOPY \\\n\-e CONFIG_X86_USE_PPRO_CHECKSUM \\\n\-e CONFIG_X86_P6_NOP \\\n\-e CONFIG_CC_HAS_RETURN_THUNK \\\n\-e CONFIG_SPECULATION_MITIGATIONS \\\n\-e CONFIG_RETHUNK \\\n\-e CONFIG_CPU_UNRET_ENTRY \\\n\-e CONFIG_CPU_IBPB_ENTRY \\\n\-e CONFIG_CPU_IBRS_ENTRY' debian/rules
+          sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
+          cat Makefile | grep KREL=
+          cat Makefile | grep EXTRAVERSION= | grep -v sed 
+          cat debian/rules | grep CONFIG_GENERIC_CPU -A1 | grep -v CONFIG_GENERIC_CPU
 
       - name: Make debs
         working-directory: ./pve-kernel
         run: |
-          make PVE_BUILD_CFLAGS="-march=broadwell" deb
+          make PVE_BUILD_CFLAGS="-march=${{ env.BUILD_ARCH }}" deb
 
       - name: Build metapackage
         working-directory: ./metapackage
