@@ -111,5 +111,5 @@ jobs:
         run: |
           curl -X POST -H "Accept: application/vnd.github+json" \
            -H "Authorization: Bearer ${{ secrets.GH_TOKEN_TRIGGER }}" https://api.github.com/repos/${{ env.REPO_TARGET }}/dispatches \
-           -d '{"event_type":"trigger_build","client_payload":{"repository":{"codename": "${{ env.OS_CODENAME }}","owner":"${{ github.repository_owner }}","name":"${{ github.repository }}","tag":"${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}"}}}'
+           -d '{"event_type":"trigger_build","client_payload":{"repository":{"codename":"${{ env.OS_CODENAME }}","owner":"${{ github.repository_owner }}","name":"${{ github.repository }}","tag":"${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}"}}}'
 # yamllint enable rule:line-length
