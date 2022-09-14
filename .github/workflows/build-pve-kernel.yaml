@@ -18,8 +18,8 @@ jobs:
     steps:
       - name: Fetch kernel versions
         run: |
-          echo "PVE_VERSION=$(curl -s http://download.proxmox.com/debian/pve/dists/${{ env.OS_CODENAME }}/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
-          echo "THIS_VERSION=$(curl -s https://pvelati.github.io/apt-repository/debian/dists/${{ env.OS_CODENAME }}/main/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | tail -1 | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
+          echo "PVE_VERSION=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
+          echo "THIS_VERSION=$(curl -s https://pvelati.github.io/apt-repository/debian/dists/${{ env.OS_CODENAME }}/main/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
 
       - name: Check
         id: check
