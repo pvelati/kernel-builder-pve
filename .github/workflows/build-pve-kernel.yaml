@@ -9,8 +9,6 @@ on:  # yamllint disable-line rule:truthy
 
 env:
   OS_CODENAME: bullseye
-  #BUILD_ARCH: broadwell
-  BUILD_ARCH: silvermont
   REPO_TARGET: pvelati/apt-repository
 
 jobs:
@@ -25,8 +23,8 @@ jobs:
       - name: Check
         id: check
         run: |
-          #if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
-          if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
+          if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
+          #if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
               echo "No new release found, exiting pipeline ..."
               exit 0
           fi
@@ -36,6 +34,9 @@ jobs:
       newversion: ${{ steps.check.outputs.newversion }}
 
   build:
+    strategy:
+      matrix:
+        BUILD_ARCH: [broadwell, silvermont]
     runs-on: ubuntu-latest
     if: ${{ needs.check.outputs.newversion }}
     needs: [check]
@@ -55,6 +56,11 @@ jobs:
           rm -rf /sys_root/usr/share/dotnet /sys_root/usr/share/host /sys_root/usr/share/packs /sys_root/usr/share/sdk* /sys_root/usr/share/shared /sys_root/usr/share/templates
 
       - uses: actions/checkout@v3
+
+      - name: Define BUILD_ARCH
+        run: |
+          echo ${{ matrix.BUILD_ARCH }} > build_arch
+          echo "BUILD_ARCH=$(cat build_arch)" >> $GITHUB_ENV
 
       - name: Clone pve-kernel repo branch pve-kernel-5.15
         run: |
