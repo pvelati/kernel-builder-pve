@@ -23,8 +23,8 @@ jobs:
       - name: Check
         id: check
         run: |
-          #if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
-          if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
+          if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
+          # if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
               echo "No new release found, exiting pipeline ..."
               exit 0
           fi
