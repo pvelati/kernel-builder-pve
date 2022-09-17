@@ -2,10 +2,13 @@
 # yamllint disable rule:line-length
 name: build_proxmox_kernel_5.15
 
+#on:  # yamllint disable-line rule:truthy
+#  # workflow_dispatch:
+#  schedule:
+#    - cron: '0 */4 * * *'  # Every 4 hours
 on:  # yamllint disable-line rule:truthy
-  # workflow_dispatch:
-  schedule:
-    - cron: '0 */4 * * *'  # Every 4 hours
+  repository_dispatch:
+    types: [trigger_build]
 
 env:
   OS_CODENAME: bullseye
