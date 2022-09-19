@@ -2,47 +2,22 @@
 # yamllint disable rule:line-length
 name: build_proxmox_kernel_5.15
 
-#on:  # yamllint disable-line rule:truthy
-#  # workflow_dispatch:
-#  schedule:
-#    - cron: '0 */4 * * *'  # Every 4 hours
 on:  # yamllint disable-line rule:truthy
   repository_dispatch:
     types: [trigger_build]
 
 env:
-  OS_CODENAME: bullseye
+  CODENAME: ${{ github.event.client_payload.repository.codename }}"
+  VERSION: ${{ github.event.client_payload.repository.version }}"
+  ARCH: ${{ github.event.client_payload.repository.arch }}"
   REPO_TARGET: pvelati/apt-repository
 
 jobs:
-  check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Fetch kernel versions
-        run: |
-          echo "PVE_VERSION=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
-          echo "THIS_VERSION=$(curl -s https://pvelati.github.io/apt-repository/debian/dists/${{ env.OS_CODENAME }}/main/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP '5.15.\d+-\d+' | sort -V | tail -1 | sed 's/[^0-9]*//g')" >> $GITHUB_ENV
-
-      - name: Check
-        id: check
-        run: |
-          if [[ "$THIS_KVERSION" -ge "$PVE_KVERSION" ]]; then
-          # if [[ "$THIS_KVERSION" -lt "$PVE_KVERSION" ]]; then  # use for reverse outcome of if condition
-              echo "No new release found, exiting pipeline ..."
-              exit 0
-          fi
-          echo "Found new Linux kernel version ${{ env.PVE_KVERSION }}"
-          echo "::set-output name=newversion::true"
-    outputs:
-      newversion: ${{ steps.check.outputs.newversion }}
-
   build:
     strategy:
       matrix:
         BUILD_ARCH: [broadwell, silvermont]
     runs-on: ubuntu-latest
-    if: ${{ needs.check.outputs.newversion }}
-    needs: [check]
     container:
       image: ghcr.io/pvelati/docker-debian-pve-builder:main
       volumes:
@@ -51,7 +26,7 @@ jobs:
         - /usr/local/share:/sys_root/usr/local/share
         - /usr/share:/sys_root/usr/share
     steps:
-      - name: Maximize build space
+      - name: Maximize space on runner
         run: |
           rm -rf /sys_root/opt/az /sys_root/opt/google /sys_root/opt/hhvm /sys_root/opt/hostedtoolcache /sys_root/opt/microsoft /sys_root/opt/mssql-tools /sys_root/opt/pipx /sys_root/opt/pipx_bin /sys_root/opt/post-generation /sys_root/opt/vsts
           rm -rf /sys_root/usr/local/lib/R /sys_root/usr/local/lib/android /sys_root/usr/local/lib/heroku /sys_root/usr/local/lib/lein /sys_root/usr/local/lib/node_modules /sys_root/usr/local/lib/python*
@@ -89,7 +64,7 @@ jobs:
           sed -i '/^\-e CONFIG_PAGE_TABLE_ISOLATION.*/a \-d CONFIG_GENERIC_CPU \\\n\-e CONFIG_MARCHITECTURE \\\n\-e CONFIG_X86_INTEL_USERCOPY \\\n\-e CONFIG_X86_USE_PPRO_CHECKSUM \\\n\-e CONFIG_X86_P6_NOP \\\n\-e CONFIG_CC_HAS_RETURN_THUNK \\\n\-e CONFIG_SPECULATION_MITIGATIONS \\\n\-e CONFIG_RETHUNK \\\n\-e CONFIG_CPU_UNRET_ENTRY \\\n\-e CONFIG_CPU_IBPB_ENTRY \\\n\-e CONFIG_CPU_IBRS_ENTRY' debian/rules
           sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
           cat Makefile | grep KREL=
-          cat Makefile | grep EXTRAVERSION= | grep -v sed 
+          cat Makefile | grep EXTRAVERSION= | grep -v sed
           cat debian/rules | grep CONFIG_GENERIC_CPU -A1 | grep -v CONFIG_GENERIC_CPU
 
       - name: Make debs
