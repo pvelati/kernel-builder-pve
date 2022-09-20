@@ -7,9 +7,9 @@ on:  # yamllint disable-line rule:truthy
     types: [trigger_build]
 
 env:
-  CODENAME: ${{ github.event.client_payload.repository.codename }}"
-  VERSION: ${{ github.event.client_payload.repository.version }}"
-  ARCH: ${{ github.event.client_payload.repository.arch }}"
+  CODENAME: ${{ github.event.client_payload.repository.codename }}
+  VERSION: ${{ github.event.client_payload.repository.version }}
+  ARCH: ${{ github.event.client_payload.repository.arch }}
   REPO_TARGET: pvelati/apt-repository
 
 jobs:
