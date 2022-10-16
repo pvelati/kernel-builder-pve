@@ -8,17 +8,18 @@ on:  # yamllint disable-line rule:truthy
     types: [trigger_build]
 
 env:
-  CODENAME: ${{ github.event.client_payload.repository.codename }}
-  VERSION: ${{ github.event.client_payload.repository.version }}
-  ARCH: ${{ github.event.client_payload.repository.arch }}
+  # CODENAME: ${{ github.event.client_payload.repository.codename }}
+  CODENAME: bullseye
+  # ARCH: ${{ github.event.client_payload.repository.arch }}
   REPO_TARGET: pvelati/apt-repository
+  KERNEL_TARGET: 5.15
 
 jobs:
   build:
     strategy:
       matrix:
         BUILD_ARCH: [broadwell, silvermont]
-    #runs-on: ubuntu-latest
+    # runs-on: ubuntu-latest
     runs-on: self-hosted
     container:
       image: ghcr.io/pvelati/docker-debian-pve-builder:main
@@ -42,37 +43,9 @@ jobs:
           echo ${{ matrix.BUILD_ARCH }} > build_arch
           echo "BUILD_ARCH=$(cat build_arch)" >> $GITHUB_ENV
 
-      - name: Clone pve-kernel repo branch pve-kernel-5.15
-        run: |
-          git clone --depth 1 --branch pve-kernel-5.15 https://git.proxmox.com/git/pve-kernel.git
-
-      - name: Add patch
-        working-directory: ./pve-kernel
-        run: |
-          wget -O patches/kernel/0032-add-uarch.patch https://raw.githubusercontent.com/graysky2/kernel_compiler_patch/master/more-uarches-for-kernel-5.15-5.16.patch
-
-      - name: Configure stuff
-        working-directory: ./pve-kernel
-        run: |
-          # need to do that in python or something else not bash
-          export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP '5.15.\d+-\d+' | tail -1 | grep -o .$)
-          echo "BUILD_NUMBER=$(echo $BUILD_NUMBER)" >> $GITHUB_ENV
-          echo ${{ env.BUILD_ARCH }} | tr 'a-z' 'A-Z' > build_arch_upper_tmp
-          export BAUP=$(cat build_arch_upper_tmp)
-          echo "BAUP=$(cat build_arch_upper_tmp)" >> $GITHUB_ENV
-          sed -i "s/^.*\bKREL=\b.*$/KREL=$BUILD_NUMBER/g" Makefile
-          sed -i "s/\EXTRAVERSION=-\${KREL}-pve/EXTRAVERSION=-\${KREL}-pve-${{ env.BUILD_ARCH }}/g" Makefile
-          sed -i 's/\-e CONFIG_PAGE_TABLE_ISOLATION/\-e CONFIG_PAGE_TABLE_ISOLATION \\/g' debian/rules
-          sed -i '/^\-e CONFIG_PAGE_TABLE_ISOLATION.*/a \-d CONFIG_GENERIC_CPU \\\n\-e CONFIG_MARCHITECTURE \\\n\-e CONFIG_X86_INTEL_USERCOPY \\\n\-e CONFIG_X86_USE_PPRO_CHECKSUM \\\n\-e CONFIG_X86_P6_NOP \\\n\-e CONFIG_CC_HAS_RETURN_THUNK \\\n\-e CONFIG_SPECULATION_MITIGATIONS \\\n\-e CONFIG_RETHUNK \\\n\-e CONFIG_CPU_UNRET_ENTRY \\\n\-e CONFIG_CPU_IBPB_ENTRY \\\n\-e CONFIG_CPU_IBRS_ENTRY' debian/rules
-          sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
-          cat Makefile | grep KREL=
-          cat Makefile | grep EXTRAVERSION= | grep -v sed
-          cat debian/rules | grep CONFIG_GENERIC_CPU -A1 | grep -v CONFIG_GENERIC_CPU
-
-      - name: Make debs
-        working-directory: ./pve-kernel
-        run: |
-          make PVE_BUILD_CFLAGS="-march=${{ env.BUILD_ARCH }}" deb
+      - name: Exec script
+        run: |-
+          ./scripts/build.sh
 
       - name: Build metapackage
         working-directory: ./metapackage
@@ -93,12 +66,12 @@ jobs:
           generate_release_notes: false
           tag_name: ${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}
           body: |
-           Metapackage for pve-kernel:
-           * Version: ${{ env.META_VERSION }}
-           * Kernel: ${{ env.KERNEL_VERSION }}
-           * Distribution: ${{ env.OS_CODENAME }}
-           * Arch: ${{ env.CPU_ARCH }}
-           * March: ${{ env.BUILD_ARCH }}
+            Metapackage for pve-kernel:
+            * Version: ${{ env.META_VERSION }}
+            * Kernel: ${{ env.KERNEL_VERSION }}
+            * Distribution: ${{ env.OS_CODENAME }}
+            * Arch: ${{ env.CPU_ARCH }}
+            * March: ${{ env.BUILD_ARCH }}
           files: |
             pve-kernel/pve-*.deb
             metapackage/pve-kernel-*_all.deb
@@ -106,6 +79,6 @@ jobs:
       - name: Trigger repository action
         run: |
           curl -X POST -H "Accept: application/vnd.github+json" \
-           -H "Authorization: Bearer ${{ secrets.GH_TOKEN_TRIGGER }}" https://api.github.com/repos/${{ env.REPO_TARGET }}/dispatches \
-           -d '{"event_type":"trigger_build","client_payload":{"repository":{"codename":"${{ env.OS_CODENAME }}","owner":"${{ github.repository_owner }}","name":"${{ github.repository }}","tag":"${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}"}}}'
+            -H "Authorization: Bearer ${{ secrets.GH_TOKEN_TRIGGER }}" https://api.github.com/repos/${{ env.REPO_TARGET }}/dispatches \
+            -d '{"event_type":"trigger_build","client_payload":{"repository":{"codename":"${{ env.OS_CODENAME }}","owner":"${{ github.repository_owner }}","name":"${{ github.repository }}","tag":"${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}"}}}'
 # yamllint enable rule:line-length
