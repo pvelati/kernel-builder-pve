@@ -8,8 +8,8 @@ on:  # yamllint disable-line rule:truthy
     types: [trigger_build]
 
 env:
-  # CODENAME: ${{ github.event.client_payload.repository.codename }}
-  CODENAME: bullseye
+  # OS_CODENAME: ${{ github.event.client_payload.repository.codename }}
+  OS_CODENAME: bullseye
   # ARCH: ${{ github.event.client_payload.repository.arch }}
   REPO_TARGET: pvelati/apt-repository
   KERNEL_TARGET: 5.15
@@ -19,8 +19,7 @@ jobs:
     strategy:
       matrix:
         BUILD_ARCH: [broadwell, silvermont]
-    # runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     container:
       image: ghcr.io/pvelati/docker-debian-pve-builder:main
       volumes:
