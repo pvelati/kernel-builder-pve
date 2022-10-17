@@ -43,7 +43,7 @@ jobs:
           echo "BUILD_ARCH=$(cat build_arch)" >> $GITHUB_ENV
 
       - name: Exec script
-        run: |-
+        run: |
           ./scripts/build.sh
 
       - name: Build metapackage
@@ -52,6 +52,7 @@ jobs:
           echo "CPU_ARCH=$(ls ../pve-kernel/pve-kernel-libc*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
           export KERNEL_VERSION=$(ls ../pve-kernel/pve-kernel-libc*.deb | cut -d '_' -f2)
           echo "KERNEL_VERSION=$(echo $KERNEL_VERSION)" >> $GITHUB_ENV
+          rm -f ../pve-kernel/pve-kernel-libc*.deb
           export META_VERSION=$(date -u +%y%m%d%H%M)
           echo "META_VERSION=$(echo $META_VERSION)" >> $GITHUB_ENV
           cat ns-control-TEMPLATE | envsubst > ns-control
