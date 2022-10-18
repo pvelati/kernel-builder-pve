@@ -68,7 +68,7 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: false
-          name: ${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}
+          tag_name: ${{ env.BUILD_ARCH }}-${{ env.KERNEL_VERSION }}-${{ env.META_VERSION }}
           body: |
             Metapackage for pve-kernel:
             * Version: ${{ env.META_VERSION }}

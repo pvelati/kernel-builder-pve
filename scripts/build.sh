@@ -10,7 +10,7 @@ echo "PRINT VARIABLES"
 echo "BUILD_ARCH: $BUILD_ARCH"
 echo "BAUP: $BAUP"
 echo "BUILD_NUMBER: $BUILD_NUMBER"
-echo "PACKAGE_NUMBER: $PACKAGE_NUMBER"
+# echo "PACKAGE_NUMBER: $PACKAGE_NUMBER"
 
 # ------------- CLONE SOURCE REPO ----------------
 git clone --depth 1 --branch pve-kernel-5.15 https://git.proxmox.com/git/pve-kernel.git
