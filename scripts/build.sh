@@ -1,10 +1,16 @@
 #!/bin/bash
 
 # ------------- DEFINE VARIABLES ----------------
-echo $BUILD_ARCH | tr 'a-z' 'A-Z' > build_arch_upper_tmp
-export BAUP=$(cat build_arch_upper_tmp)
-export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)
-export PACKAGE_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'pve_5.15.\d+-\d+' | tail -1 | grep -o .$)
+# echo $BUILD_ARCH | tr 'a-z' 'A-Z' > build_arch_upper_tmp
+# export BAUP=$(cat build_arch_upper_tmp)
+# export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)
+# export PACKAGE_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'pve_5.15.\d+-\d+' | tail -1 | grep -o .$)
+
+echo "PRINT VARIABLES"
+echo "BUILD_ARCH: $BUILD_ARCH"
+echo "BAUP: $BAUP"
+echo "BUILD_NUMBER: $BUILD_NUMBER"
+echo "PACKAGE_NUMBER: $PACKAGE_NUMBER"
 
 # ------------- CLONE SOURCE REPO ----------------
 git clone --depth 1 --branch pve-kernel-5.15 https://git.proxmox.com/git/pve-kernel.git

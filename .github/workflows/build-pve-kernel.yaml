@@ -37,10 +37,14 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      - name: Define BUILD_ARCH
+      - name: Define build variables
         run: |
           echo ${{ matrix.BUILD_ARCH }} > build_arch
           echo "BUILD_ARCH=$(cat build_arch)" >> $GITHUB_ENV
+          echo ${{ matrix.BUILD_ARCH }} | tr 'a-z' 'A-Z' > build_arch_upper_tmp
+          echo "BAUP=$(cat build_arch_upper_tmp)" >> $GITHUB_ENV
+          echo "BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)" >> $GITHUB_ENV
+          echo "PACKAGE_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'pve_5.15.\d+-\d+' | tail -1 | grep -o .$)" >> $GITHUB_ENV
 
       - name: Exec script
         run: |
