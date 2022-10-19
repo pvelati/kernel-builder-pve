@@ -53,10 +53,10 @@ jobs:
       - name: Build metapackage
         working-directory: ./metapackage
         run: |
-          echo "CPU_ARCH=$(ls ../pve-kernel/pve-kernel-libc*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
-          export KERNEL_VERSION=$(ls ../pve-kernel/pve-kernel-libc*.deb | cut -d '_' -f2)
-          echo "KERNEL_VERSION=$(echo $KERNEL_VERSION)" >> $GITHUB_ENV
           rm -f ../pve-kernel/pve-kernel-libc*.deb
+          echo "CPU_ARCH=$(ls ../pve-kernel/pve-headers-*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
+          export KERNEL_VERSION=$(ls ../pve-kernel/pve-headers-*.deb | grep -oP '5.15.\d+-\d+' | head -n 1)
+          echo "KERNEL_VERSION=$(echo $KERNEL_VERSION)" >> $GITHUB_ENV
           export META_VERSION=$(date -u +%y%m%d%H%M)
           echo "META_VERSION=$(echo $META_VERSION)" >> $GITHUB_ENV
           cat ns-control-TEMPLATE | envsubst > ns-control
