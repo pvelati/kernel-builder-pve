@@ -1,22 +1,15 @@
 #!/bin/bash
 
-# ------------- DEFINE VARIABLES ----------------
-# echo $BUILD_ARCH | tr 'a-z' 'A-Z' > build_arch_upper_tmp
-# export BAUP=$(cat build_arch_upper_tmp)
-# export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)
+set -aux
+
+# ------------- DEFINE BUILD VARIABLES ----------------
+export BAUP=$($BUILD_ARCH | tr 'a-z' 'A-Z')
+export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)
 # export PACKAGE_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'pve_5.15.\d+-\d+' | tail -1 | grep -o .$)
 
-echo "PRINT VARIABLES"
-echo "BUILD_ARCH: $BUILD_ARCH"
-echo "BAUP: $BAUP"
-echo "BUILD_NUMBER: $BUILD_NUMBER"
-# echo "PACKAGE_NUMBER: $PACKAGE_NUMBER"
 
-# ------------- CLONE SOURCE REPO ----------------
+# ------------- CLONE SOURCE REPO AND ENTER FOLDER ----------------
 git clone --depth 1 --branch pve-kernel-5.15 https://git.proxmox.com/git/pve-kernel.git
-
-
-# ------------- ENTER FOLDER ----------------
 cd pve-kernel
 
 
@@ -35,3 +28,23 @@ sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
 
 # ------------- START BUILD ----------------
 yes "" | make PVE_BUILD_CFLAGS="-march=$BUILD_ARCH" deb
+
+
+# ------------- REMOVE UNUSED FILES ----------------
+rm -f ../pve-kernel/pve-kernel-libc*.deb
+
+
+# ------------- DEFINE METAPACKAGE VARIABLES ----------------
+echo "CPU_ARCH=$(ls pve-headers-*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
+echo "KERNEL_VERSION=$(ls pve-headers-*.deb | grep -oP '5.15.\d+-\d+' | head -n 1)" >> $GITHUB_ENV
+echo "META_VERSION=$(date -u +%y%m%d%H)" >> $GITHUB_ENV
+
+
+# ------------- RELOAD GLOBAL VARIABLES ----------------
+source $GITHUB_ENV
+
+
+# ------------- START BUILD METAPACKAGE ----------------
+cd ../metapackage
+cat ns-control-TEMPLATE | envsubst > ns-control
+equivs-build ns-control
