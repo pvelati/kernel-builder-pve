@@ -36,30 +36,9 @@ jobs:
 
       - uses: actions/checkout@v3
 
-      # - name: Define build variables
-      #   run: |
-      #     echo ${{ env.BUILD_ARCH }} > build_arch
-      #     echo "BUILD_ARCH=$(cat build_arch)" >> $GITHUB_ENV
-      #     echo ${{ env.BUILD_ARCH }} | tr 'a-z' 'A-Z' > build_arch_upper_tmp
-      #     echo "BAUP=$(cat build_arch_upper_tmp)" >> $GITHUB_ENV
-      #     echo "BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)" >> $GITHUB_ENV
-      #     echo "PACKAGE_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'pve_5.15.\d+-\d+' | tail -1 | grep -o .$)" >> $GITHUB_ENV
-
       - name: Exec build script
         run: |
           ./scripts/build.sh
-
-      # - name: Build metapackage
-      #   working-directory: ./metapackage
-      #   run: |
-      #     rm -f ../pve-kernel/pve-kernel-libc*.deb
-      #     echo "CPU_ARCH=$(ls ../pve-kernel/pve-headers-*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
-      #     export KERNEL_VERSION=$(ls ../pve-kernel/pve-headers-*.deb | grep -oP '5.15.\d+-\d+' | head -n 1)
-      #     echo "KERNEL_VERSION=$(echo $KERNEL_VERSION)" >> $GITHUB_ENV
-      #     export META_VERSION=$(date -u +%y%m%d%H)
-      #     echo "META_VERSION=$(echo $META_VERSION)" >> $GITHUB_ENV
-      #     cat ns-control-TEMPLATE | envsubst > ns-control
-      #     equivs-build ns-control
 
       - name: Release packages
         uses: softprops/action-gh-release@v1

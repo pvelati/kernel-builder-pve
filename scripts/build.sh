@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -aux
+set -eau
 
 # ------------- DEFINE BUILD VARIABLES ----------------
 export BAUP=$($BUILD_ARCH | tr 'a-z' 'A-Z')
