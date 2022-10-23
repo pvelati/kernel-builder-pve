@@ -35,7 +35,6 @@ rm -f ../pve-kernel/pve-kernel-libc*.deb
 
 
 # ------------- DEFINE METAPACKAGE VARIABLES ----------------
-echo "CPU_ARCH=$(ls pve-headers-*.deb | cut -d '_' -f3 | cut -d '.' -f1)" >> $GITHUB_ENV
 echo "KERNEL_VERSION=$(ls pve-headers-*.deb | grep -oP '5.15.\d+-\d+' | head -n 1)" >> $GITHUB_ENV
 echo "META_VERSION=$(date -u +%y%m%d%H)" >> $GITHUB_ENV
 
