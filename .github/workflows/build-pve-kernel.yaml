@@ -2,8 +2,8 @@
 # yamllint disable rule:line-length
 name: build_proxmox_kernel_5.15
 
-run-name: ${{ github.event.client_payload.repository.buildarch }}
-concurrency: ${{ github.event.client_payload.repository.buildarch }}
+run-name: ${{ github.event.client_payload.repository.arch }}
+concurrency: ${{ github.event.client_payload.repository.arch }}
 
 on:  # yamllint disable-line rule:truthy
   repository_dispatch:
@@ -11,10 +11,8 @@ on:  # yamllint disable-line rule:truthy
 
 env:
   OS_CODENAME: ${{ github.event.client_payload.repository.codename }}
-  ARCH: ${{ github.event.client_payload.repository.arch }}
-  BUILD_ARCH: ${{ github.event.client_payload.repository.build_arch }}
+  BUILD_ARCH: ${{ github.event.client_payload.repository.arch }}
   REPO_TARGET: pvelati/apt-repository
-  KERNEL_TARGET: 5.15
 
 jobs:
   build:
