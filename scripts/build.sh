@@ -27,7 +27,8 @@ sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
 
 
 # ------------- START BUILD ----------------
-yes "" | make PVE_BUILD_CFLAGS="-march=$BUILD_ARCH" deb
+export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O2 -lto -ftree-vectorize -pipe"
+yes "" | make CFLAGS="$BUILD_FLAGS" CXXFLAGS="$BUILD_FLAGS" deb
 
 
 # ------------- REMOVE UNUSED FILES ----------------
@@ -47,3 +48,4 @@ source $GITHUB_ENV
 cd ../metapackage
 cat ns-control-TEMPLATE | envsubst > ns-control
 equivs-build ns-control
+
