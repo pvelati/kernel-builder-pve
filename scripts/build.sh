@@ -3,7 +3,7 @@
 set -eau
 
 # ------------- DEFINE BUILD VARIABLES ----------------
-export BAUP=$($BUILD_ARCH | tr 'a-z' 'A-Z')
+export BAUP=$(echo $BUILD_ARCH | tr 'a-z' 'A-Z')
 export BUILD_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'kernel-5.15.\d+-\d+' | tail -1 | grep -o .$)
 # export PACKAGE_NUMBER=$(curl -s http://download.proxmox.com/debian/pve/dists/bullseye/pve-no-subscription/binary-amd64/Packages | grep ^Filename  | grep pve-kernel-5 | grep amd64.deb$ | sort -V | grep -oP 'pve_5.15.\d+-\d+' | tail -1 | grep -o .$)
 
