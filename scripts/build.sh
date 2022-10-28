@@ -28,7 +28,7 @@ sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
 
 # ------------- START BUILD ----------------
 #export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O2 -flto -ftree-vectorize -pipe"
-export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O1"
+export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O2"
 yes "" | make CFLAGS="$BUILD_FLAGS" CXXFLAGS="$BUILD_FLAGS" deb
 
 
