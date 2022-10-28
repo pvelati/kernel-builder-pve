@@ -28,7 +28,7 @@ sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
 
 # ------------- START BUILD ----------------
 #export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O2 -flto -ftree-vectorize -pipe"
-export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH"
+export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O0"
 yes "" | make CFLAGS="$BUILD_FLAGS" CXXFLAGS="$BUILD_FLAGS" deb
 
 
@@ -38,7 +38,7 @@ rm -f ../pve-kernel/pve-kernel-libc*.deb
 
 # ------------- DEFINE METAPACKAGE VARIABLES ----------------
 echo "KERNEL_VERSION=$(ls pve-headers-*.deb | grep -oP '5.15.\d+-\d+' | head -n 1)" >> $GITHUB_ENV
-echo "META_VERSION=$(date -u +%y%m%d%H)" >> $GITHUB_ENV
+echo "META_VERSION=$(date -u +%y%m%d%H%M)" >> $GITHUB_ENV
 
 
 # ------------- RELOAD GLOBAL VARIABLES ----------------
