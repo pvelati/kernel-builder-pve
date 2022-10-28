@@ -3,9 +3,9 @@
 name: build_proxmox_kernel_5.15
 
 # run-name: ${{ github.event.client_payload.repository.build_arch }}-${{ github.event.client_payload.repository.arch }}
-run-name: ${{ github.event.client_payload.repository.build_arch }}-ozero
+run-name: ${{ github.event.client_payload.repository.build_arch }}-og
 # concurrency: ${{ github.event.client_payload.repository.build_arch }}-${{ github.event.client_payload.repository.arch }}
-concurrency: ${{ github.event.client_payload.repository.build_arch }}-ozero
+concurrency: ${{ github.event.client_payload.repository.build_arch }}-og
 
 on:  # yamllint disable-line rule:truthy
   repository_dispatch:
