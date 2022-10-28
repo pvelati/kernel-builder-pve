@@ -3,9 +3,9 @@
 name: build_proxmox_kernel_5.15
 
 # run-name: ${{ github.event.client_payload.repository.build_arch }}-${{ github.event.client_payload.repository.arch }}
-run-name: ${{ github.event.client_payload.repository.build_arch }}
+run-name: ${{ github.event.client_payload.repository.build_arch }}-only-mtune-march
 # concurrency: ${{ github.event.client_payload.repository.build_arch }}-${{ github.event.client_payload.repository.arch }}
-concurrency: ${{ github.event.client_payload.repository.build_arch }}
+concurrency: ${{ github.event.client_payload.repository.build_arch }}-only-mtune-march
 
 on:  # yamllint disable-line rule:truthy
   repository_dispatch:
@@ -55,6 +55,7 @@ jobs:
             * Distribution: ${{ env.OS_CODENAME }}
             * Arch: ${{ env.ARCH }}
             * March: ${{ env.BUILD_ARCH }}
+            * TEST: "-mtune -march"
           files: |
             pve-kernel/pve-*.deb
             metapackage/pve-kernel-*_all.deb
