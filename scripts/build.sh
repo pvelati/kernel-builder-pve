@@ -13,8 +13,8 @@ git clone --depth 1 --branch pve-kernel-5.15 https://git.proxmox.com/git/pve-ker
 cd pve-kernel
 
 
-# ------------- ADD CPU PATCH ----------------
-wget -O patches/kernel/0032-add-uarch.patch https://raw.githubusercontent.com/graysky2/kernel_compiler_patch/master/more-uarches-for-kernel-5.15-5.16.patch
+# ------------- ADD ALL PATCHES ----------------
+cp ../patches/*.patch patches/kernel/.
 
 
 # ------------- CHANGE CONFIGURATION ----------------
@@ -27,8 +27,7 @@ sed -i "s/CONFIG_MARCHITECTURE/CONFIG_M$BAUP/g" debian/rules
 
 
 # ------------- START BUILD ----------------
-#export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -O2 -flto -ftree-vectorize -pipe"
-export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH -Ofast"
+export BUILD_FLAGS="-mtune=$BUILD_ARCH -march=$BUILD_ARCH"
 yes "" | make CFLAGS="$BUILD_FLAGS" CXXFLAGS="$BUILD_FLAGS" deb
 
 
